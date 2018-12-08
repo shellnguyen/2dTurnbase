@@ -3,51 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class MainManager : MonoBehaviour
+public class MainManager : Singleton<MainManager>
 {
-    enum NodeType
+    protected MainManager()
     {
-        Ground = 0,
-        Water,
-        Obstacle
-    }
-
-    struct Node
-    {
-        public Vector2 gridPosition;
-        public Vector3 position;
-        public NodeType nodeType;
-
-        public Node(Vector2 gridPosition, Vector3 position, NodeType type)
-        {
-            this.gridPosition = gridPosition;
-            this.position = position;
-            this.nodeType = type;
-        }
-    }
-
-    [SerializeField] private Tilemap[] m_Layers;
-    [SerializeField] private Node[,] m_nodeGraph;
-    [SerializeField] private List<Node> m_unsortedNodes;
-    private int m_Rows;
-    private int m_Columns;
-
-	// Use this for initialization
-	private void Start ()
-	{
-        m_unsortedNodes = new List<Node>();
+        m_unsortedNodes = new List<Utils.Node>();
         m_Layers = new Tilemap[3];
         m_Rows = 0;
         m_Columns = 0;
+    }
+
+    [SerializeField] private Tilemap[] m_Layers;
+    [SerializeField] private Utils.Node[,] m_nodeGraph;
+    [SerializeField] private List<Utils.Node> m_unsortedNodes;
+    private int m_Rows;
+    private int m_Columns;
+
+    public Utils.Node[,] NodeGraph
+    {
+        get
+        {
+            return m_nodeGraph;
+        }
+    }
+
+    private void Awake()
+    {
         GetMapLayers();
         CreateNodeFromTilemap();
         PrintNodeGraph();
-	}
+    }
 	
 	// Update is called once per frame
 	private void Update ()
 	{
-		
 	}
 
     private void GetMapLayers()
@@ -75,7 +64,7 @@ public class MainManager : MonoBehaviour
 
         m_Rows = m_Layers[0].size.y;
         m_Columns = m_Layers[0].size.x;
-        m_nodeGraph = new Node[m_Rows, m_Columns];
+        m_nodeGraph = new Utils.Node[m_Rows, m_Columns];
 
         for (int x = startX; x < endX; ++x)
         {
@@ -83,17 +72,17 @@ public class MainManager : MonoBehaviour
             {
                 TileBase tile = m_Layers[0].GetTile(new Vector3Int(x, y, 0));
                 Vector3 worldPos = m_Layers[0].CellToWorld(new Vector3Int(x, y, 0));
-                Node node = new Node(new Vector2(x, y), worldPos, NodeType.Ground);
+                Utils.Node node = new Utils.Node(new Vector2(x, y), worldPos, Utils.NodeType.Ground);
                 if (tile == null)
                 {
-                    node.nodeType = NodeType.Obstacle;
+                    node.nodeType = Utils.NodeType.Obstacle;
                 }
                 else
                 {
                     var obstacle = m_Layers[1].GetTile(new Vector3Int(x, y, 0));
                     if (obstacle != null)
                     {
-                        node.nodeType = NodeType.Obstacle;
+                        node.nodeType = Utils.NodeType.Obstacle;
                     }
                 }
 
